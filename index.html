@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChatUz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+body { background: #f0f2f5; height: 100vh; display: flex; align-items: center; justify-content: center; }
+#login-screen { background: white; border-radius: 16px; padding: 40px; text-align: center; width: 320px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+#login-screen h1 { font-size: 24px; color: #534AB7; margin-bottom: 8px; }
+#login-screen p { font-size: 14px; color: #888; margin-bottom: 24px; }
+#login-input { width: 100%; padding: 12px 16px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; margin-bottom: 12px; outline: none; }
+#login-input:focus { border-color: #534AB7; }
+#login-btn { width: 100%; padding: 12px; background: #534AB7; color: white; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; }
+#login-btn:hover { background: #3C3489; }
+#app { display: none; height: 100vh; width: 100%; flex-direction: row; }
+#sidebar { width: 280px; background: white; border-right: 1px solid #eee; display: flex; flex-direction: column; }
+#sidebar-header { padding: 16px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; background: #534AB7; }
+#avatar-btn { width: 42px; height: 42px; border-radius: 50%; background: white; color: #534AB7; font-weight: bold; font-size: 15px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+#avatar-btn img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: none; }
+#username-display { font-size: 15px; font-weight: bold; color: white; }
+#online-status { font-size: 12px; color: #9FE1CB; }
+#members-list { flex: 1; overflow-y: auto; }
+.member-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid #f5f5f5; }
+.member-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: white; flex-shrink: 0; }
+.member-name { font-size: 14px; font-weight: 500; color: #333; }
+.member-status { font-size: 11px; color: #1D9E75; }
+.offline-status { color: #aaa; }
+#chat-area { flex: 1; display: flex; flex-direction: column; }
+#chat-header { padding: 16px; border-bottom: 1px solid #eee; background: white; display: flex; align-items: center; gap: 10px; }
+#chat-icon { width: 38px; height: 38px; border-radius: 50%; background: #1D9E75; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; }
+#chat-title { font-size: 16px; font-weight: bold; color: #333; }
+#chat-subtitle { font-size: 12px; color: #1D9E75; }
+#messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #f0f2f5; }
+.msg { display: flex; flex-direction: column; max-width: 70%; }
+.msg.mine { align-self: flex-end; align-items: flex-end; }
+.msg.other { align-self: flex-start; align-items: flex-start; }
+.msg-author { font-size: 11px; font-weight: bold; color: #534AB7; margin-bottom: 3px; }
+.msg-bubble { padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.5; word-break: break-word; }
+.msg.mine .msg-bubble { background: #534AB7; color: white; border-bottom-right-radius: 4px; }
+.msg.other .msg-bubble { background: white; color: #333; border: 1px solid #eee; border-bottom-left-radius: 4px; }
+.msg-time { font-size: 10px; color: #aaa; margin-top: 3px; }
+.msg-media-box { background: #e8e5ff; border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.msg-media-icon { font-size: 24px; }
+.msg-media-name { font-size: 13px; color: #534AB7; font-weight: 500; }
+.msg-link { color: #378ADD; text-decoration: underline; font-size: 14px; }
+.msg-video-box { background: #222; border-radius: 10px; width: 200px; height: 110px; display: flex; align-items: center; justify-content: center; color: white; font-size: 36px; margin-bottom: 4px; cursor: pointer; }
+#input-area { padding: 12px 16px; background: white; border-top: 1px solid #eee; display: flex; align-items: center; gap: 8px; }
+#attach-wrap { position: relative; }
+#attach-btn { background: none; border: 1px solid #ddd; color: #666; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+#attach-btn:hover { background: #f5f5f5; }
+#attach-menu { position: absolute; bottom: 48px; left: 0; background: white; border: 1px solid #eee; border-radius: 12px; padding: 8px; display: none; min-width: 150px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 10; }
+#attach-menu.open { display: block; }
+.attach-opt { display: flex; align-items: center; gap: 8px; padding: 10px 12px; font-size: 14px; color: #333; cursor: pointer; border-radius: 8px; }
+.attach-opt:hover { background: #f5f5f5; }
+.attach-opt span { font-size: 18px; }
+#msg-input { flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 24px; font-size: 14px; outline: none; }
+#msg-input:focus { border-color: #534AB7; }
+#send-btn { width: 40px; height: 40px; border-radius: 50%; background: #534AB7; color: white; border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; }
+#send-btn:hover { background: #3C3489; }
+#profile-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; }
+#profile-overlay.open { display: flex; }
+#profile-box { background: white; border-radius: 16px; padding: 32px; width: 300px; text-align: center; }
+#profile-avatar-big { width: 90px; height: 90px; border-radius: 50%; background: #534AB7; color: white; font-size: 30px; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; cursor: pointer; overflow: hidden; }
+#profile-avatar-big img { width: 100%; height: 100%; object-fit: cover; display: none; }
+#profile-username { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 4px; }
+#profile-online { font-size: 13px; color: #1D9E75; margin-bottom: 20px; }
+#file-input { display: none; }
+.prof-btn { padding: 10px 20px; border-radius: 10px; font-size: 14px; cursor: pointer; margin: 4px; }
+.prof-btn-main { background: #534AB7; color: white; border: none; }
+.prof-btn-main:hover { background: #3C3489; }
+.prof-btn-sec { background: none; color: #666; border: 1px solid #ddd; }
+.prof-btn-sec:hover { background: #f5f5f5; }
+</style>
+</head>
+<body>
+<div id="login-screen">
+  <div style="font-size:48px;margin-bottom:12px;">💬</div>
+  <h1>ChatUz</h1>
+  <p>Username kiriting va chatga qo'shiling</p>
+  <input id="login-input" type="text" placeholder="Username (masalan: Ali)" maxlength="20" />
+  <button id="login-btn">Kirish ➜</button>
+</div>
+<div id="app">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <button id="avatar-btn" title="Profil">
+        <img id="sidebar-avatar-img" alt="profil" />
+        <span id="sidebar-initials"></span>
+      </button>
+      <div>
+        <div id="username-display"></div>
+        <div id="online-status">● Online</div>
+      </div>
+    </div>
+    <div id="members-list"></div>
+  </div>
+  <div id="chat-area">
+    <div id="chat-header">
+      <div id="chat-icon">👥</div>
+      <div>
+        <div id="chat-title">Umumiy chat</div>
+        <div id="chat-subtitle">online a'zolar</div>
+      </div>
+    </div>
+    <div id="messages"></div>
+    <div id="input-area">
+      <div id="attach-wrap">
+        <button id="attach-btn" title="Biriktirish">📎</button>
+        <div id="attach-menu">
+          <div class="attach-opt" onclick="sendSpecial('image')"><span>🖼️</span> Rasm</div>
+          <div class="attach-opt" onclick="sendSpecial('video')"><span>🎥</span> Video</div>
+          <div class="attach-opt" onclick="sendSpecial('file')"><span>📄</span> Fayl</div>
+          <div class="attach-opt" onclick="sendSpecial('link')"><span>🔗</span> Havola</div>
+        </div>
+      </div>
+      <input id="msg-input" type="text" placeholder="Xabar yozing..." />
+      <button id="send-btn">➤</button>
+    </div>
+  </div>
+</div>
+<div id="profile-overlay">
+  <div id="profile-box">
+    <div id="profile-avatar-big" onclick="document.getElementById('file-input').click()">
+      <img id="profile-img" alt="profil rasmi" />
+      <span id="profile-initials-big"></span>
+    </div>
+    <div id="profile-username"></div>
+    <div id="profile-online">● Online</div>
+    <input type="file" id="file-input" accept="image/*" />
+    <button class="prof-btn prof-btn-main" onclick="document.getElementById('file-input').click()">📷 Rasm yuklash</button>
+    <button class="prof-btn prof-btn-sec" onclick="closeProfile()">Yopish</button>
+  </div>
+</div>
+<script>
+var myName='',myColor='',myPhoto=null;
+var colors=['#534AB7','#1D9E75','#D85A30','#D4537E','#378ADD','#BA7517','#A32D2D'];
+var members=[{name:'Zulfiya',color:'#D4537E',online:true},{name:'Bobur',color:'#1D9E75',online:true},{name:'Kamol',color:'#378ADD',online:false},{name:'Malika',color:'#BA7517',online:true},{name:'Jasur',color:'#D85A30',online:false}];
+var replies=["Zo'r!","Rahmat!","Ha, tushunarli","Yaxshi fikr!","👍","Albatta!","😊"];
+function initials(n){return n.slice(0,2).toUpperCase();}
+function colorFor(n){var h=0;for(var i=0;i<n.length;i++)h+=n.charCodeAt(i);return colors[h%colors.length];}
+function nowTime(){var d=new Date(),h=d.getHours(),m=d.getMinutes();return(h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
+document.getElementById('login-btn').onclick=function(){
+  var v=document.getElementById('login-input').value.trim();if(!v)return;
+  myName=v;myColor=colorFor(v);
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  document.getElementById('sidebar-initials').textContent=initials(myName);
+  document.getElementById('username-display').textContent=myName;
+  document.getElementById('profile-username').textContent=myName;
+  document.getElementById('profile-initials-big').textContent=initials(myName);
+  renderMembers();
+  addMsg('Tizim','#888','Xush kelibsiz! '+myName+" chatga qo'shildi 🎉",'text',false);
+  addMsg('Zulfiya','#D4537E','Salom '+myName+'! 👋','text',false);
+};
+document.getElementById('login-input').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('login-btn').click();});
+function renderMembers(){
+  var list=document.getElementById('members-list');list.innerHTML='';
+  var oc=members.filter(function(m){return m.online;}).length+1;
+  document.getElementById('chat-subtitle').textContent=oc+" a'zo online";
+  members.forEach(function(m){
+    var d=document.createElement('div');d.className='member-item';
+    d.innerHTML='<div class="member-avatar" style="background:'+m.color+'">'+initials(m.name)+'</div><div><div class="member-name">'+m.name+'</div><div class="member-status'+(m.online?'':' offline-status')+'">'+(m.online?'● Online':'Offline')+'</div></div>';
+    list.appendChild(d);
+  });
+  var me=document.createElement('div');me.className='member-item';
+  me.innerHTML='<div class="member-avatar" style="background:'+myColor+'">'+initials(myName)+'</div><div><div class="member-name">'+myName+' (men)</div><div class="member-status">● Online</div></div>';
+  list.insertBefore(me,list.firstChild);
+}
+function addMsg(from,color,content,type,isMine){
+  var msgs=document.getElementById('messages'),d=document.createElement('div');
+  d.className='msg '+(isMine?'mine':'other');
+  var inner='';
+  if(!isMine)inner+='<div class="msg-author" style="color:'+color+'">'+from+'</div>';
+  if(type==='text')inner+='<div class="msg-bubble">'+content+'</div>';
+  else if(type==='image')inner+='<div class="msg-media-box"><span class="msg-media-icon">🖼️</span><span class="msg-media-name">'+content+'</span></div>';
+  else if(type==='video')inner+='<div class="msg-video-box">▶</div><div style="font-size:12px;color:#aaa;">'+content+'</div>';
+  else if(type==='file')inner+='<div class="msg-media-box"><span class="msg-media-icon">📄</span><span class="msg-media-name">'+content+'</span></div>';
+  else if(type==='link')inner+='<div class="msg-bubble"><a class="msg-link" href="'+content+'" target="_blank">'+content+'</a></div>';
+  inner+='<div class="msg-time">'+nowTime()+'</div>';
+  d.innerHTML=inner;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+document.getElementById('send-btn').onclick=sendText;
+document.getElementById('msg-input').addEventListener('keydown',function(e){if(e.key==='Enter')sendText();});
+function sendText(){
+  var inp=document.getElementById('msg-input'),t=inp.value.trim();
+  if(!t||!myName)return;
+  addMsg(myName,myColor,t,'text',true);inp.value='';
+  setTimeout(function(){
+    var online=members.filter(function(m){return m.online;});
+    if(online.length){var r=online[Math.floor(Math.random()*online.length)];addMsg(r.name,r.color,replies[Math.floor(Math.random()*replies.length)],'text',false);}
+  },1000+Math.random()*800);
+}
+document.getElementById('attach-btn').onclick=function(e){e.stopPropagation();document.getElementById('attach-menu').classList.toggle('open');};
+document.addEventListener('click',function(){document.getElementById('attach-menu').classList.remove('open');});
+function sendSpecial(type){
+  document.getElementById('attach-menu').classList.remove('open');
+  if(type==='image')addMsg(myName,myColor,'rasm_'+Date.now()+'.jpg','image',true);
+  else if(type==='video')addMsg(myName,myColor,'video_'+Date.now()+'.mp4','video',true);
+  else if(type==='file')addMsg(myName,myColor,'fayl_'+Date.now()+'.pdf','file',true);
+  else if(type==='link'){var url=prompt('Havolani kiriting:');if(url)addMsg(myName,myColor,url,'link',true);}
+}
+document.getElementById('avatar-btn').onclick=function(){document.getElementById('profile-overlay').classList.add('open');};
+function closeProfile(){document.getElementById('profile-overlay').classList.remove('open');}
+document.getElementById('file-input').onchange=function(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    myPhoto=ev.target.result;
+    document.getElementById('profile-img').src=myPhoto;
+    document.getElementById('profile-img').style.display='block';
+    document.getElementById('profile-initials-big').style.display='none';
+    var simg=document.getElementById('sidebar-avatar-img');
+    simg.src=myPhoto;simg.style.display='block';
+    document.getElementById('sidebar-initials').style.display='none';
+  };
+  reader.readAsDataURL(file);
+};
+</script>
+</body>
+</html>
